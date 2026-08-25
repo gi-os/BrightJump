@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Package visibility (API 30+). Without these the resolver sees nothing but itself and
+        every strategy returns null on a phone where Chats is plainly installed.
+
+        Declaring the three intents rather than QUERY_ALL_PACKAGES is deliberate: it grants
+        visibility of exactly the activities the ladder in ChatsResolver.kt asks about, and it
+        keeps the app installable from anywhere without a policy exception.
+    -->
+    <queries>
+        <!-- Strategy 1: whatever handles sms: — the default messaging app's thread list. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="sms" />
+        </intent>
+        <!-- Strategy 2: the app that declares itself the messaging app. -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.APP_MESSAGING" />
+        </intent>
+        <!-- Strategy 3: every launcher activity, so we can match one by label the way Luma does. -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- LightOS itself, named outright so strategy 4 can ask it for a launch intent. -->
+        <package android:name="com.lightos" />
+    </queries>
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true">
+
+        <!--
+            Translucent, no title bar, no layout. The activity resolves a target and finishes
+            inside onCreate, so nothing of this app is ever drawn — pressing the toolbox icon
+            looks like Chats opening directly, with no black frame in between.
+
+            excludeFromRecents + noHistory so a back press from Chats returns to the toolbox
+            rather than re-entering this activity and bouncing forward again.
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

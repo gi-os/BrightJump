@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    108dp viewport, glyph kept inside the 66dp safe zone so no launcher mask clips the arrow.
+    Strokes rather than filled paths: at LightOS's icon size a hairline outline stays legible
+    where a filled bubble turns into a black blob.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- speech bubble -->
+    <path
+        android:pathData="M34,34 L74,34 A6,6 0 0 1 80,40 L80,62 A6,6 0 0 1 74,68 L34,68 A6,6 0 0 1 28,62 L28,40 A6,6 0 0 1 34,34 Z"
+        android:strokeColor="#000000"
+        android:strokeWidth="5"
+        android:strokeLineJoin="round" />
+
+    <!-- tail -->
+    <path
+        android:pathData="M40,66 L54,66 L40,80 Z"
+        android:fillColor="#000000" />
+
+    <!-- arrow shaft -->
+    <path
+        android:pathData="M38,51 L64,51"
+        android:strokeColor="#000000"
+        android:strokeWidth="5"
+        android:strokeLineCap="butt" />
+
+    <!-- arrow head -->
+    <path
+        android:pathData="M72,51 L61,44 L61,58 Z"
+        android:fillColor="#000000" />
+</vector>
