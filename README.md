@@ -1,5 +1,7 @@
 # BrightJump
 
+[**⬇ Download the latest APK**](https://github.com/gi-os/BrightJump/releases/latest) · free, open source.
+
 One icon in the LightOS toolbox that opens the built-in **Chats** tool, and nothing else.
 
 Press it and Chats is on screen. BrightJump draws no window of its own — it resolves a target,
