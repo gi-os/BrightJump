@@ -28,6 +28,8 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: ''
       - uses: gradle/actions/setup-gradle@v4
 
       # The ranking in Scoring.kt is the only logic in this app, and getting it wrong is silent
