@@ -15,6 +15,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: release
     steps:
       - name: Restore release signing key and lineage
         id: signing

@@ -98,7 +98,12 @@ then replace `signing-fingerprint.txt` with signer #2's SHA-256 digest. Do not c
 the original fingerprint. Keep the original private key out of CI; it is only needed
 offline to create the lineage.
 
-In **Settings → Secrets and variables → Actions**, set these five secrets:
+In [Settings → Environments](https://github.com/gi-os/BrightJump/settings/environments),
+create an environment named `release`. Under **Deployment branches and tags**, choose
+**Selected branches and tags** and add one **Branch** rule for `main`, with no other
+branch or tag rules. Store the five signing secrets only in that environment. Remove
+any repository-level copies and don't grant matching organization secrets to BrightJump:
+the workflow's trigger filter alone does not protect repository-wide secrets.
 
 | Secret | Value |
 | --- | --- |
@@ -111,11 +116,11 @@ In **Settings → Secrets and variables → Actions**, set these five secrets:
 On Linux, upload the files without printing their contents and enter the other values when prompted:
 
 ```sh
-base64 -w 0 brightjump-new.jks | gh secret set RELEASE_KEYSTORE_BASE64 --repo gi-os/BrightJump
-base64 -w 0 brightjump.lineage | gh secret set SIGNING_LINEAGE_BASE64 --repo gi-os/BrightJump
-gh secret set KEYSTORE_PASSWORD --repo gi-os/BrightJump
-gh secret set KEY_ALIAS --repo gi-os/BrightJump
-gh secret set KEY_PASSWORD --repo gi-os/BrightJump
+base64 -w 0 brightjump-new.jks | gh secret set RELEASE_KEYSTORE_BASE64 --env release --repo gi-os/BrightJump
+base64 -w 0 brightjump.lineage | gh secret set SIGNING_LINEAGE_BASE64 --env release --repo gi-os/BrightJump
+gh secret set KEYSTORE_PASSWORD --env release --repo gi-os/BrightJump
+gh secret set KEY_ALIAS --env release --repo gi-os/BrightJump --body brightjump-release
+gh secret set KEY_PASSWORD --env release --repo gi-os/BrightJump
 ```
 
 CI signs with the new key using APK Signature Scheme v3 and verifies the proof of rotation
@@ -125,9 +130,10 @@ but a catalog that compares only the current certificate can still hide it from 
 the old signer. Coordinate the BrightMarket catalog/updater transition before re-enabling
 publishing, and only re-enable it for an authorized release.
 
-A push to `main` (other than ignored paths) or a manual run of `build.yml` builds,
-signs, tags, and publishes. Tag pushes do not trigger it. Branch and PR checks
-in `check.yml` publish nothing.
+A push to `main` (other than ignored paths) or a manual run of `build.yml` on
+`main` builds, signs, tags, and publishes. The `release` environment blocks the
+job on other refs. Tag pushes do not trigger it. Branch and PR checks in
+`check.yml` use no signing secrets and publish nothing.
 
 ## Support
 
