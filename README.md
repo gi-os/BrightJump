@@ -76,25 +76,54 @@ debug key. Neither can update an installed production APK.
 
 ### Release signing
 
-In the repository's **Settings → Secrets and variables → Actions**, set these four secrets:
+Before merging the signing change, disable **Build & Release APK** so the merge does
+not publish. In a private directory outside the checkout, use Android Build Tools
+35.0.0 to generate the replacement key and create a proof of rotation from the original
+release key. Use fresh passwords when prompted.
+
+```sh
+keytool -genkeypair -storetype JKS -keystore brightjump-new.jks -alias brightjump-release \
+  -keyalg RSA -keysize 3072 -validity 10000
+
+apksigner rotate --out brightjump.lineage \
+  --old-signer --ks /path/to/original/brightjump.jks --ks-key-alias brightjump \
+  --set-installed-data true --set-rollback false \
+  --new-signer --ks brightjump-new.jks --ks-key-alias brightjump-release
+
+apksigner lineage --in brightjump.lineage --print-certs
+```
+
+Verify that signer #1's SHA-256 digest matches `signing-lineage-root-fingerprint.txt`,
+then replace `signing-fingerprint.txt` with signer #2's SHA-256 digest. Do not change
+the original fingerprint. Keep the original private key out of CI; it is only needed
+offline to create the lineage.
+
+In **Settings → Secrets and variables → Actions**, set these five secrets:
 
 | Secret | Value |
 | --- | --- |
-| `RELEASE_KEYSTORE_BASE64` | Base64-encoded release keystore |
-| `KEYSTORE_PASSWORD` | Keystore password |
-| `KEY_ALIAS` | Release key alias |
-| `KEY_PASSWORD` | Release key password |
+| `RELEASE_KEYSTORE_BASE64` | Base64-encoded `brightjump-new.jks` |
+| `SIGNING_LINEAGE_BASE64` | Base64-encoded `brightjump.lineage` |
+| `KEYSTORE_PASSWORD` | New keystore password |
+| `KEY_ALIAS` | `brightjump-release` |
+| `KEY_PASSWORD` | New key password |
 
-On Linux, encode and upload the keystore without printing it:
+On Linux, upload the files without printing their contents and enter the other values when prompted:
 
 ```sh
-base64 -w 0 /path/to/release.jks | gh secret set RELEASE_KEYSTORE_BASE64 --repo gi-os/BrightJump
+base64 -w 0 brightjump-new.jks | gh secret set RELEASE_KEYSTORE_BASE64 --repo gi-os/BrightJump
+base64 -w 0 brightjump.lineage | gh secret set SIGNING_LINEAGE_BASE64 --repo gi-os/BrightJump
+gh secret set KEYSTORE_PASSWORD --repo gi-os/BrightJump
+gh secret set KEY_ALIAS --repo gi-os/BrightJump
+gh secret set KEY_PASSWORD --repo gi-os/BrightJump
 ```
 
-CI decodes the keystore into the runner's temporary directory and passes its path as
-`KEYSTORE_FILE`. It refuses to publish unless all four secrets are present and the
-APK's signer matches `signing-fingerprint.txt`. Plan signer rotation before changing
-this fingerprint: a new key alone cannot update existing installs.
+CI signs with the new key using APK Signature Scheme v3 and verifies the proof of rotation
+from the original pin to the new pin. BrightJump requires Android API 29, so no supported
+device needs a v1/v2 signature or the old private key. Android can accept an in-place update,
+but a catalog that compares only the current certificate can still hide it from users on
+the old signer. Coordinate the BrightMarket catalog/updater transition before re-enabling
+publishing, and only re-enable it for an authorized release.
 
 A push to `main` (other than ignored paths) or a manual run of `build.yml` builds,
 signs, tags, and publishes. Tag pushes do not trigger it. Branch and PR checks
