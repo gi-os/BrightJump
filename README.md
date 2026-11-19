@@ -71,14 +71,34 @@ about rather than taking `QUERY_ALL_PACKAGES` — same visibility, no policy exc
 ./gradlew :app:assembleRelease
 ```
 
-The signing keystore is committed with its password, as it is across the fleet, so a local build
-and a CI build produce interchangeable APKs and either upgrades over the other. It is a public
-key with a public password and protects nothing; treat it as an identity, not a secret. CI pins
-its fingerprint (`signing-fingerprint.txt`) and fails the build if it drifts, because a changed
-certificate turns every Obtainium update into an opaque `Failure: Invalid`.
+Without signing credentials, the release APK is unsigned and debug builds use the standard Android
+debug key. Neither can update an installed production APK.
 
-A push to `main` builds, signs, tags and releases. Push a branch first — `check.yml` runs the
-same compile and the tests while publishing nothing.
+### Release signing
+
+In the repository's **Settings → Secrets and variables → Actions**, set these four secrets:
+
+| Secret | Value |
+| --- | --- |
+| `RELEASE_KEYSTORE_BASE64` | Base64-encoded release keystore |
+| `KEYSTORE_PASSWORD` | Keystore password |
+| `KEY_ALIAS` | Release key alias |
+| `KEY_PASSWORD` | Release key password |
+
+On Linux, encode and upload the keystore without printing it:
+
+```sh
+base64 -w 0 /path/to/release.jks | gh secret set RELEASE_KEYSTORE_BASE64 --repo gi-os/BrightJump
+```
+
+CI decodes the keystore into the runner's temporary directory and passes its path as
+`KEYSTORE_FILE`. It refuses to publish unless all four secrets are present and the
+APK's signer matches `signing-fingerprint.txt`. Plan signer rotation before changing
+this fingerprint: a new key alone cannot update existing installs.
+
+A push to `main` (other than ignored paths) or a manual run of `build.yml` builds,
+signs, tags, and publishes. Tag pushes do not trigger it. Branch and PR checks
+in `check.yml` publish nothing.
 
 ## Support
 
