@@ -3,6 +3,11 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val keystoreFile = providers.environmentVariable("KEYSTORE_FILE").orNull
+val keystorePassword = providers.environmentVariable("KEYSTORE_PASSWORD").orNull
+val releaseKeyAlias = providers.environmentVariable("KEY_ALIAS").orNull
+val releaseKeyPassword = providers.environmentVariable("KEY_PASSWORD").orNull
+
 android {
     namespace = "com.gios.brightjump"
     compileSdk = 35
@@ -17,13 +22,17 @@ android {
         versionName = "1.0.0"
     }
 
-    signingConfigs {
-        getByName("debug") {
-            storeFile = file("../keystore/brightjump.jks")
-            storePassword = "brightjump"
-            keyAlias = "brightjump"
-            keyPassword = "brightjump"
+    val releaseSigning = if (!keystoreFile.isNullOrBlank() && !keystorePassword.isNullOrBlank()
+        && !releaseKeyAlias.isNullOrBlank() && !releaseKeyPassword.isNullOrBlank()
+    ) {
+        signingConfigs.create("release") {
+            storeFile = rootProject.file(keystoreFile)
+            storePassword = keystorePassword
+            keyAlias = releaseKeyAlias
+            keyPassword = releaseKeyPassword
         }
+    } else {
+        null
     }
 
     buildTypes {
@@ -32,8 +41,7 @@ android {
             // spend a minute of CI to save a few kilobytes and add a class of failure that only
             // shows up on the phone.
             isMinifyEnabled = false
-            // Same committed key as debug, so either APK upgrades over the other.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = releaseSigning
         }
     }
     compileOptions {
