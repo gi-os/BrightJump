@@ -1,5 +1,10 @@
 pluginManagement {
-    repositories { google(); mavenCentral(); gradlePluginPortal() }
+    repositories {
+        google()
+        // The default Maven Central endpoint rate-limited the GitHub Actions runner.
+        maven(url = "https://maven-central.storage-download.googleapis.com/maven2/")
+        gradlePluginPortal()
+    }
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -9,7 +14,7 @@ dependencyResolutionManagement {
     // dependency also skips the GPR token handshake that has broken CI in three other repos.
     repositories {
         google()
-        mavenCentral()
+        maven(url = "https://maven-central.storage-download.googleapis.com/maven2/")
     }
 }
 rootProject.name = "BrightJump"
